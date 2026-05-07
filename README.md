@@ -29,7 +29,7 @@ También es recomendable tener habilitadas en PHP las extensiones habituales que
 1. Clonar o descargar el repositorio.
 
 ```bash
-git clone <url-del-repositorio>
+git clone git@github.com:RubenMoleroRios/task-manager-laravel.git
 ```
 
 2. Entrar en la carpeta del proyecto.
