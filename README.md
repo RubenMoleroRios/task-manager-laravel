@@ -1,19 +1,28 @@
 # Task Manager Laravel
 
-Aplicación de gestión de tareas desarrollada con Laravel. El proyecto combina una API REST y una interfaz web sencilla en Blade con una implementación de CRUD, validaciones, separación de responsabilidades y uso correcto de Eloquent.
+Aplicación de gestión de tareas desarrollada con Laravel. El proyecto incluye una interfaz web con Blade, autenticación de usuarios, operaciones CRUD sobre tareas y una API protegida por autenticación.
 
-## Bloque 1. Instalación del proyecto
+## Bloque 1. Instalación y ejecución del proyecto
 
-### Requisitos previos
+Este proyecto puede ejecutarse de dos formas:
 
-Antes de arrancar el proyecto, la máquina debe tener instalado lo siguiente:
+- en local con PHP, Composer, Node y MySQL instalados en tu máquina
+- con Docker, usando la configuración que se ha añadido al repositorio
 
-- PHP 8.2 o superior.
-- Composer.
-- Node.js y npm.
-- MySQL.
+### Opción recomendada
 
-También es recomendable tener habilitadas en PHP las extensiones habituales que Laravel necesita en este proyecto:
+Actualmente la forma más directa de levantar el proyecto es Docker, porque ya deja preparada la base de datos, los puertos y la ejecución de migraciones.
+
+### Requisitos
+
+#### Para ejecución local
+
+- PHP 8.4
+- Composer
+- Node.js y npm
+- MySQL 8
+
+Extensiones PHP necesarias:
 
 - `openssl`
 - `fileinfo`
@@ -23,42 +32,88 @@ También es recomendable tener habilitadas en PHP las extensiones habituales que
 - `xml`
 - `ctype`
 - `json`
+- `zip`
 
-### Pasos para poner la app en marcha
+#### Para ejecución con Docker
 
-1. Clonar o descargar el repositorio.
+- Docker Desktop
+- Docker Compose
+- `make` opcional, solo si quieres usar los atajos del `Makefile`
 
-```bash
-git clone git@github.com:RubenMoleroRios/task-manager-laravel.git
-```
+### Ejecución con Docker
 
-2. Entrar en la carpeta del proyecto.
+#### 1. Entrar en la carpeta del proyecto
 
 ```bash
 cd task-manager-laravel
 ```
 
-3. Instalar dependencias PHP con Composer.
+#### 2. Levantar el entorno de desarrollo
+
+Con `make`:
+
+```bash
+make dev-up
+```
+
+Sin `make`:
+
+```bash
+Copy-Item docker/.env.example docker/.env -Force
+docker compose --env-file docker/.env -f docker/dev/docker-compose.yml up -d --build
+```
+
+Notas:
+
+- Si `docker/.env` no existe y arrancas con `make`, el propio `Makefile` lo crea automáticamente desde `docker/.env.example`.
+- El contenedor de Laravel espera a MySQL antes de arrancar.
+- Las migraciones se ejecutan automáticamente mientras `RUN_MIGRATIONS=true` en `docker/.env`.
+
+#### 3. Acceder a la aplicación
+
+URLs principales:
+
+- app web: `http://localhost:8000`
+- healthcheck: `http://localhost:8000/up`
+- MySQL expuesto en host: `localhost:3307`
+
+Comportamiento de entrada:
+
+- `/` redirige a `/tasks`
+- si no hay sesión iniciada, Laravel te llevará al login
+
+#### 4. Comandos útiles de Docker
+
+```bash
+make dev-logs
+make dev-down
+make dev-down-vol
+make prod-up
+make prod-down
+```
+
+### Ejecución en local sin Docker
+
+#### 1. Entrar en la carpeta del proyecto
+
+```bash
+cd task-manager-laravel
+```
+
+#### 2. Instalar dependencias
 
 ```bash
 composer install
-```
-
-4. Instalar dependencias front con npm.
-
-```bash
 npm install
 ```
 
-5. Copiar el archivo `.env.example` y renombrarlo a `.env`.
+#### 3. Crear el archivo de entorno
 
 ```powershell
-cp .env.example .env
+Copy-Item .env.example .env -Force
 ```
 
-### Configuración del archivo .env
-
-Después de copiar `.env.example` a `.env`, hay que revisar al menos estos valores:
+#### 4. Revisar la configuración mínima del `.env`
 
 ```env
 APP_NAME="Task Manager Laravel"
@@ -72,103 +127,109 @@ DB_PORT=3306
 DB_DATABASE=task_manager
 DB_USERNAME=root
 DB_PASSWORD=
-
-SESSION_DRIVER=file
 ```
 
-### Nota sobre el archivo .env.example
-
-Este proyecto requiere que el archivo `.env.example` se copie y se le quite el sufijo `.example`, dejándolo como `.env`. Ese paso es obligatorio porque Laravel carga su configuración principal desde `.env`.
-
-
-6. Generar la clave de aplicación.
+#### 5. Generar la clave de la aplicación
 
 ```bash
 php artisan key:generate
 ```
 
-7. Crear la base de datos en MySQL.
+#### 6. Crear la base de datos
 
 ```sql
 CREATE DATABASE task_manager;
 ```
 
-8. Ejecutar migraciones y seeders.
+#### 7. Ejecutar migraciones
 
 ```bash
-php artisan migrate --seed
+php artisan migrate
 ```
 
-9. Compilar los assets o lanzar Vite en modo desarrollo.
+#### 8. Compilar assets
 
-Para compilar una versión lista para usar:
+Si quieres dejar los assets compilados:
 
 ```bash
 npm run build
 ```
 
-Para desarrollo con recompilación automática:
+Si quieres trabajar con Vite en desarrollo:
 
 ```bash
 npm run dev
 ```
 
-10. Levantar el servidor de Laravel.
+#### 9. Levantar Laravel
 
 ```bash
 php artisan serve
 ```
 
-
-### Assets front
-
-La interfaz Blade carga CSS y JavaScript mediante Vite. Por eso, después de instalar dependencias front, hay dos opciones válidas:
-
-- usar `npm run build` para dejar los assets compilados,
-- usar `npm run dev` si se quiere trabajar en modo desarrollo.
-
-Si solo se quiere ejecutar la app localmente sin tocar estilos o JavaScript, `npm run build` es suficiente.
-
-### URL de acceso
-
-Una vez arrancado el proyecto, la app queda accesible en:
+La aplicación quedará accesible en:
 
 - `http://127.0.0.1:8000`
 
-La raíz redirige automáticamente a:
+## Bloque 2. Estructura general del proyecto
 
-- `http://127.0.0.1:8000/tasks`
+### Web
 
+La interfaz web principal está protegida con autenticación y usa Blade para renderizar las vistas. La raíz `/` redirige a `/tasks`.
 
-## Bloque 2. Mi compresión del proyecto.
+### API
 
-### Routes
-
-En las routes tenemos 2 archivos importantes, con uno trabajamos en la api y con el otro trabajamos en la web, en el de api por ejemplo, tenemos indicados todos los endpoints de la misma con sus respectivos alias. 
+La API está definida en `routes/api.php` y expone operaciones CRUD de tareas bajo el prefijo `/api/tasks`, también protegidas por autenticación.
 
 ### Controladores
 
-He decidido separar los controladores, para separar responsabilidades, ya que aunque ambos terminan llamando "TaskService" cada uno tiene su lógica interna, uno para API y otro para la vista de web con Blade. 
+El proyecto separa responsabilidades entre:
 
-En el controlador de TaskWebController.php, podemos ver como trabajan las funciones siguiendo el flujo primero llamando al servicio, luego devuelve las vistas llamándolas por los alias a las distintas routes y gestionando los posibles errores que puedan surgir. 
-
-Actualmente, el controlador que utiliza la aplicación, es "TaskWebController.php", también está creado el controlador "TaskController.php" preparado para utilizarlo en la api, pero actualmente no se utiliza.
-
-He creado dos controladores para mostrar mis conocimientos sobre la reutilización de la lógica en "TaskService.php", separando responsabilidades, API y web.
+- `TaskWebController` para la parte web
+- `TaskController` para la parte API
+- `AuthController` para login, registro y logout
 
 ### Servicios
 
-Ambos controladores convergen aquí, aquí se ejecutan las acciones en la base de datos, utilizando la característica de eloquent.
+La lógica de negocio se centraliza en servicios para evitar duplicación entre la capa web y la capa API.
 
-### Vistas blade
+### Persistencia
 
-En "index.blade.php" podemos ver el front de la aplicación, donde cargan los formularios y las tareas que se encuentren en la lista. Además de las funcionalidades de programación necesarias para las vistas de blade.
+Las migraciones crean las tablas necesarias para:
 
-### Migraciones
+- usuarios
+- tareas
+- cola de jobs
+- caché en base de datos
 
-En este archivo "create_task_table.php" observamos las funciones que utilizan las migraciones, para aplicar la migración o revertirla.
+## Bloque 3. Dockerización añadida
 
+La app ha quedado dockerizada siguiendo como referencia la estructura de `apiTLOR` del workspace.
 
-En mi github, tengo una APIREST la cual tengo dockerizada, esta no he decidido dockerizarla, porque quería una aplicación más simple, también, porque tengo entenido que no trabajáis con docker.
+Archivos principales:
 
-https://github.com/RubenMoleroRios/TheLordOfTheRingApi 
+- `Dockerfile` multi-stage con targets `dev` y `prod`
+- `docker/dev/docker-compose.yml`
+- `docker/prod/docker-compose.yml`
+- `docker/.env.example`
+- `docker/scripts/entrypoint.sh`
+- `Makefile`
+
+La imagen de Docker usa PHP 8.4 y en producción compila también los assets con Vite.
+
+## Bloque 4. Verificación rápida
+
+Para comprobar que la aplicación está levantada con Docker:
+
+```bash
+curl http://localhost:8000/up
+```
+
+Si quieres comprobar además que los contenedores siguen activos:
+
+```bash
+docker compose --env-file docker/.env -f docker/dev/docker-compose.yml ps
+```
+# Task Manager Laravel
+
+Aplicación de gestión de tareas desarrollada con Laravel. El proyecto combina una API REST y una interfaz web sencilla en Blade con una implementación de CRUD, validaciones, separación de responsabilidades y uso correcto de Eloquent.
