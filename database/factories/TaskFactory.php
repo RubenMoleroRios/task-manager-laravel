@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Task;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -74,6 +75,7 @@ class TaskFactory extends Factory
         $task = fake()->randomElement(self::TASK_TEMPLATES);
 
         return [
+            'user_id' => User::factory(),
             'title' => $task['title'],
             'description' => fake()->boolean(85) ? $task['description'] : null,
             'completed' => fake()->boolean(25),

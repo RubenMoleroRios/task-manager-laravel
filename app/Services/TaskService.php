@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use Illuminate\Auth\AuthenticationException;
 use App\Models\Task;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Auth;
 
 class TaskService
 {
@@ -12,12 +14,17 @@ class TaskService
      */
     public function getAllTasks(): Collection
     {
-        return Task::query()->latest()->get();
+        return Task::query()
+            ->where('user_id', $this->userId())
+            ->latest()
+            ->get();
     }
 
     public function getTaskById(int $id): Task
     {
-        return Task::query()->findOrFail($id);
+        return Task::query()
+            ->where('user_id', $this->userId())
+            ->findOrFail($id);
     }
 
     /**
@@ -25,7 +32,10 @@ class TaskService
      */
     public function createTask(array $data): Task
     {
-        return Task::query()->create($data);
+        return Task::query()->create([
+            ...$data,
+            'user_id' => $this->userId(),
+        ]);
     }
 
     /**
@@ -53,5 +63,19 @@ class TaskService
         ]);
 
         return $task->refresh();
+    }
+
+    /**
+     * @throws AuthenticationException
+     */
+    private function userId(): int
+    {
+        $userId = Auth::id();
+
+        if ($userId === null) {
+            throw new AuthenticationException();
+        }
+
+        return $userId;
     }
 }
